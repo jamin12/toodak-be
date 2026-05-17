@@ -1,3 +1,35 @@
 spring:
   application:
     name: toodak-be
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/toodak}
+    username: ${DB_USERNAME:toodak}
+    password: ${DB_PASSWORD:toodak}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    # Flyway가 스키마를 관리. JPA는 검증만.
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Seoul
+  flyway:
+    # Spring 시작 시 자동 마이그레이션 차단. 명시적으로 `./gradlew flywayMigrate` 실행 필요.
+    enabled: false
+
+jwt:
+  # 운영 환경에선 반드시 환경변수로 32바이트 이상 시크릿 주입.
+  secret: ${JWT_SECRET:local-dev-secret-do-not-use-in-production-please-replace-min-256-bits-required}
+  access-ttl: PT15M
+  refresh-ttl: P30D
+
+google:
+  # Google OAuth 클라이언트 ID. id_token aud 검증에 사용.
+  audience: ${GOOGLE_AUDIENCE:replace-with-google-client-id.apps.googleusercontent.com}
+
+logging:
+  level:
+    org.toodakbe: DEBUG

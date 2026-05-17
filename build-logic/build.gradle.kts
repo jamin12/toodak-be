@@ -19,6 +19,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.KOTLIN}")
     implementation("org.jetbrains.kotlin.plugin.spring:org.jetbrains.kotlin.plugin.spring.gradle.plugin:${Versions.KOTLIN}")
     implementation("org.jetbrains.kotlin.plugin.jpa:org.jetbrains.kotlin.plugin.jpa.gradle.plugin:${Versions.KOTLIN}")
+    implementation("org.jetbrains.kotlin.plugin.allopen:org.jetbrains.kotlin.plugin.allopen.gradle.plugin:${Versions.KOTLIN}")
     implementation("org.springframework.boot:spring-boot-gradle-plugin:${Versions.SPRING_BOOT}")
     implementation("io.spring.dependency-management:io.spring.dependency-management.gradle.plugin:${Versions.SPRING_DEPENDENCY_MANAGEMENT}")
     implementation("org.jlleitschuh.gradle:ktlint-gradle:${Versions.KTLINT}")

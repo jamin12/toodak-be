@@ -1,0 +1,15 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{kt,kts}]
+# 도메인 모델 일관성을 위해 private constructor + companion factory(create/of/restore) 패턴을 강제한다.
+# 단일 식 함수를 expression body로 강제 변환하는 ktlint 룰을 비활성화해
+# 멀티라인 시그니처 + 멀티라인 expression body 사이 cycle을 회피한다.
+ktlint_standard_function-expression-body = disabled

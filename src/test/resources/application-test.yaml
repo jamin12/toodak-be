@@ -1,0 +1,24 @@
+# 테스트 프로필 (Phase 3 본격 보강 예정).
+# 현 시점에선 도메인 단위 테스트는 Spring 컨텍스트 없이 순수 Kotest로 수행하므로
+# 이 파일은 향후 @SpringBootTest 통합 테스트용 placeholder.
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/toodak_test}
+    username: ${DB_USERNAME:toodak}
+    password: ${DB_PASSWORD:toodak}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    # 테스트도 동일하게 자동 차단. 통합 테스트가 필요하면 setUp에서 명시적으로 trigger.
+    enabled: false
+
+jwt:
+  secret: test-only-secret-do-not-use-in-production-please-replace-min-256-bits-required
+  access-ttl: PT15M
+  refresh-ttl: P1D
+
+google:
+  audience: test-audience.apps.googleusercontent.com

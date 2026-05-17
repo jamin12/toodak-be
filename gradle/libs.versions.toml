@@ -7,6 +7,18 @@ kotlinLogging = "7.0.7"
 kotest = "5.9.1"
 mockk = "1.14.2"
 jackson = "2.18.2"
+# JWT (io.jsonwebtoken). Spring Boot BOM에 포함되지 않음 — 명시.
+jjwt = "0.12.6"
+# 매퍼 (REST 단순 변환용). Kotlin은 kapt로 사용.
+mapstruct = "1.6.3"
+# 테스트 데이터 빌더 (Kotlin variant).
+instancio = "5.4.1"
+# Google ID Token 검증 (GoogleIdTokenVerifier).
+googleApiClient = "2.7.0"
+# Flyway Gradle plugin (수동 마이그레이션 실행용). core는 Spring Boot BOM이 관리.
+flywayPlugin = "11.1.1"
+# UUID v1~v7 생성기 (RFC 9562). Java 표준엔 v4까지만 있음.
+uuidCreator = "6.1.1"
 
 [libraries]
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
@@ -19,11 +31,35 @@ spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter",
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "springBoot" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "springBoot" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "springBoot" }
+# 신규: 인증/인가 + 입력 검증
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "springBoot" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "springBoot" }
+# 신규: DB (PostgreSQL JDBC + Flyway). 버전은 Spring Boot BOM 사용.
+postgresql = { module = "org.postgresql:postgresql" }
+flyway-core = { module = "org.flywaydb:flyway-core" }
+flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql" }
+# 신규: JWT
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
+# 신규: 매퍼 (MapStruct)
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+# 신규: Google ID Token 검증
+google-api-client = { module = "com.google.api-client:google-api-client", version.ref = "googleApiClient" }
+# 신규: UUID v7 생성기
+uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version.ref = "uuidCreator" }
+# 신규: 테스트 데이터 (Instancio는 Java 라이브러리지만 Kotlin에서도 정상 동작)
+instancio-core = { module = "org.instancio:instancio-core", version.ref = "instancio" }
+instancio-junit = { module = "org.instancio:instancio-junit", version.ref = "instancio" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
 kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+# 수동 마이그레이션 실행용 (`./gradlew flywayMigrate`)
+flyway = { id = "org.flywaydb.flyway", version.ref = "flywayPlugin" }
