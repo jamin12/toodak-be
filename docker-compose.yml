@@ -15,8 +15,9 @@ services:
       POSTGRES_PASSWORD: toodak
       POSTGRES_DB: toodak
       TZ: Asia/Seoul
+    # 호스트 포트 15432로 노출 (기본 5432는 다른 PostgreSQL 인스턴스와 충돌 가능).
     ports:
-      - "5432:5432"
+      - "15432:5432"
     volumes:
       - toodak-db-data:/var/lib/postgresql/data
     healthcheck:

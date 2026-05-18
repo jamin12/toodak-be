@@ -63,7 +63,7 @@ dependencies {
 //   ./gradlew flywayValidate  # 적용된 마이그레이션 검증
 //   ./gradlew flywayClean     # (개발 전용) 스키마 초기화 — clean-disabled=false 필요
 flyway {
-    url = System.getenv("DB_URL") ?: "jdbc:postgresql://localhost:5432/toodak"
+    url = System.getenv("DB_URL") ?: "jdbc:postgresql://localhost:15432/toodak"
     user = System.getenv("DB_USERNAME") ?: "toodak"
     password = System.getenv("DB_PASSWORD") ?: "toodak"
     schemas = arrayOf("public")
