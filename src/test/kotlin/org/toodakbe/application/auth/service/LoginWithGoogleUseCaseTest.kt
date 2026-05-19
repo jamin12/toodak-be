@@ -2,6 +2,7 @@ package org.toodakbe.application.auth.service
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -10,10 +11,13 @@ import io.mockk.verify
 import org.toodakbe.application.auth.dto.LoginWithGoogleCommand
 import org.toodakbe.application.auth.port.outbound.GoogleOAuthOutPort
 import org.toodakbe.application.auth.port.outbound.JwtOutPort
+import org.toodakbe.application.auth.port.outbound.RefreshTokenOutPort
 import org.toodakbe.application.member.port.outbound.MemberOutPort
 import org.toodakbe.application.member.port.outbound.SocialIdentityOutPort
 import org.toodakbe.domain.auth.model.AccessToken
+import org.toodakbe.domain.auth.model.RefreshToken
 import org.toodakbe.domain.auth.model.VerifiedSocialUser
+import org.toodakbe.domain.auth.vo.DeviceId
 import org.toodakbe.domain.member.enums.MemberStatus
 import org.toodakbe.domain.member.exception.MemberNotActiveException
 import org.toodakbe.domain.member.model.Member
@@ -31,6 +35,7 @@ class LoginWithGoogleUseCaseTest :
         val now = Instant.parse("2026-05-15T10:00:00Z")
         val clock = Clock.fixed(now, ZoneOffset.UTC)
         val accessTtl = Duration.ofMinutes(15)
+        val refreshTtl = Duration.ofDays(30)
         val command =
             LoginWithGoogleCommand(
                 idToken = "google.id.token",
@@ -53,20 +58,30 @@ class LoginWithGoogleUseCaseTest :
                 picture = null,
             )
 
+        fun newUseCase(
+            googleOAuthOutPort: GoogleOAuthOutPort,
+            memberOutPort: MemberOutPort,
+            socialIdentityOutPort: SocialIdentityOutPort,
+            refreshTokenOutPort: RefreshTokenOutPort,
+            jwtOutPort: JwtOutPort,
+        ) = LoginWithGoogleUseCase(
+            googleOAuthOutPort = googleOAuthOutPort,
+            memberOutPort = memberOutPort,
+            socialIdentityOutPort = socialIdentityOutPort,
+            refreshTokenOutPort = refreshTokenOutPort,
+            jwtOutPort = jwtOutPort,
+            clock = clock,
+            accessTtl = accessTtl,
+            refreshTtl = refreshTtl,
+        )
+
         Given("SocialIdentity가 없고 같은 이메일 회원도 없는 신규 사용자 (자동 가입)") {
             val googleOAuthOutPort = mockk<GoogleOAuthOutPort>()
             val memberOutPort = mockk<MemberOutPort>()
             val socialIdentityOutPort = mockk<SocialIdentityOutPort>()
+            val refreshTokenOutPort = mockk<RefreshTokenOutPort>()
             val jwtOutPort = mockk<JwtOutPort>()
-            val useCase =
-                LoginWithGoogleUseCase(
-                    googleOAuthOutPort = googleOAuthOutPort,
-                    memberOutPort = memberOutPort,
-                    socialIdentityOutPort = socialIdentityOutPort,
-                    jwtOutPort = jwtOutPort,
-                    clock = clock,
-                    accessTtl = accessTtl,
-                )
+            val useCase = newUseCase(googleOAuthOutPort, memberOutPort, socialIdentityOutPort, refreshTokenOutPort, jwtOutPort)
 
             val payload = googlePayload("google-sub-1", "new@gmail.com", name = "홍길동")
             every { googleOAuthOutPort.verifyIdToken(command.idToken) } returns payload
@@ -82,6 +97,10 @@ class LoginWithGoogleUseCaseTest :
             every {
                 socialIdentityOutPort.save(capture(savedIdentitySlot))
             } answers { savedIdentitySlot.captured }
+
+            every { refreshTokenOutPort.findActiveBy(any(), DeviceId("device-1")) } returns null
+            val savedRefreshSlot = slot<RefreshToken>()
+            every { refreshTokenOutPort.save(capture(savedRefreshSlot)) } answers { savedRefreshSlot.captured }
 
             every {
                 jwtOutPort.issueAccessToken(any(), accessTtl)
@@ -102,10 +121,76 @@ class LoginWithGoogleUseCaseTest :
                     savedIdentitySlot.captured.providerUserId shouldBe ProviderUserId("google-sub-1")
                     savedIdentitySlot.captured.emailVerifiedAt shouldBe now
                 }
-                Then("Access Token 이 발급된다") {
+                Then("기존 활성 RefreshToken 조회 후 신규 RefreshToken 이 저장된다") {
+                    verify(exactly = 1) { refreshTokenOutPort.findActiveBy(savedMemberSlot.captured.id, DeviceId("device-1")) }
+                    verify(exactly = 1) { refreshTokenOutPort.save(any()) }
+                    savedRefreshSlot.captured.memberId shouldBe savedMemberSlot.captured.id
+                    savedRefreshSlot.captured.deviceId shouldBe DeviceId("device-1")
+                    savedRefreshSlot.captured.deviceLabel shouldBe "iPhone 15 Pro"
+                    savedRefreshSlot.captured.expiresAt shouldBe now.plus(refreshTtl)
+                }
+                Then("Access/Refresh Token 이 발급된다") {
                     result.accessToken shouldBe "access.jwt.token"
-                    result.refreshToken shouldBe null
+                    result.refreshToken.shouldNotBeNull()
+                    RefreshToken.hashOfPlain(result.refreshToken) shouldBe savedRefreshSlot.captured.tokenHash
                     result.expiresIn shouldBe accessTtl.seconds
+                }
+            }
+        }
+
+        Given("같은 디바이스에 기존 활성 RefreshToken 이 있는 재로그인") {
+            val googleOAuthOutPort = mockk<GoogleOAuthOutPort>()
+            val memberOutPort = mockk<MemberOutPort>()
+            val socialIdentityOutPort = mockk<SocialIdentityOutPort>()
+            val refreshTokenOutPort = mockk<RefreshTokenOutPort>()
+            val jwtOutPort = mockk<JwtOutPort>()
+            val useCase = newUseCase(googleOAuthOutPort, memberOutPort, socialIdentityOutPort, refreshTokenOutPort, jwtOutPort)
+
+            val member = Member.register(Email("user@gmail.com"), now.minusSeconds(86_400))
+            val identity =
+                SocialIdentity.link(
+                    memberId = member.id,
+                    provider = Provider.GOOGLE,
+                    providerUserId = ProviderUserId("google-sub-x"),
+                    emailVerifiedAt = now.minusSeconds(86_400),
+                    now = now.minusSeconds(86_400),
+                )
+            val existingActive =
+                RefreshToken
+                    .issue(member.id, DeviceId("device-1"), "old label", refreshTtl, now.minusSeconds(3600))
+                    .entity
+
+            val payload = googlePayload("google-sub-x", "user@gmail.com")
+            every { googleOAuthOutPort.verifyIdToken(command.idToken) } returns payload
+            every {
+                socialIdentityOutPort.findBy(Provider.GOOGLE, ProviderUserId("google-sub-x"))
+            } returns identity
+            every { memberOutPort.findById(member.id) } returns member
+            every {
+                refreshTokenOutPort.findActiveBy(member.id, DeviceId("device-1"))
+            } returns existingActive
+
+            val savedSlots = mutableListOf<RefreshToken>()
+            every { refreshTokenOutPort.save(capture(savedSlots)) } answers { firstArg() }
+
+            every {
+                jwtOutPort.issueAccessToken(member.id, accessTtl)
+            } returns AccessToken.of("access.jwt.token", now.plus(accessTtl))
+
+            When("execute를 호출하면") {
+                val result = useCase.execute(command)
+
+                Then("기존 활성 토큰이 먼저 revoke 된 뒤 신규 토큰이 저장된다 (총 2회 save)") {
+                    verify(exactly = 2) { refreshTokenOutPort.save(any()) }
+                    savedSlots.size shouldBe 2
+                    savedSlots[0].id shouldBe existingActive.id
+                    savedSlots[0].isRevoked() shouldBe true
+                    savedSlots[1].isRevoked() shouldBe false
+                    savedSlots[1].deviceId shouldBe DeviceId("device-1")
+                }
+                Then("Access/Refresh Token 이 발급된다") {
+                    result.accessToken shouldBe "access.jwt.token"
+                    RefreshToken.hashOfPlain(result.refreshToken) shouldBe savedSlots[1].tokenHash
                 }
             }
         }
@@ -114,16 +199,9 @@ class LoginWithGoogleUseCaseTest :
             val googleOAuthOutPort = mockk<GoogleOAuthOutPort>()
             val memberOutPort = mockk<MemberOutPort>()
             val socialIdentityOutPort = mockk<SocialIdentityOutPort>()
+            val refreshTokenOutPort = mockk<RefreshTokenOutPort>()
             val jwtOutPort = mockk<JwtOutPort>()
-            val useCase =
-                LoginWithGoogleUseCase(
-                    googleOAuthOutPort,
-                    memberOutPort,
-                    socialIdentityOutPort,
-                    jwtOutPort,
-                    clock,
-                    accessTtl,
-                )
+            val useCase = newUseCase(googleOAuthOutPort, memberOutPort, socialIdentityOutPort, refreshTokenOutPort, jwtOutPort)
 
             val existingMember = Member.register(Email("user@gmail.com"), now.minusSeconds(86_400))
             val payload = googlePayload("google-sub-2", "user@gmail.com")
@@ -138,6 +216,9 @@ class LoginWithGoogleUseCaseTest :
             every {
                 socialIdentityOutPort.save(capture(savedIdentitySlot))
             } answers { savedIdentitySlot.captured }
+
+            every { refreshTokenOutPort.findActiveBy(existingMember.id, DeviceId("device-1")) } returns null
+            every { refreshTokenOutPort.save(any()) } answers { firstArg() }
 
             every {
                 jwtOutPort.issueAccessToken(existingMember.id, accessTtl)
@@ -162,16 +243,9 @@ class LoginWithGoogleUseCaseTest :
             val googleOAuthOutPort = mockk<GoogleOAuthOutPort>()
             val memberOutPort = mockk<MemberOutPort>()
             val socialIdentityOutPort = mockk<SocialIdentityOutPort>()
+            val refreshTokenOutPort = mockk<RefreshTokenOutPort>()
             val jwtOutPort = mockk<JwtOutPort>()
-            val useCase =
-                LoginWithGoogleUseCase(
-                    googleOAuthOutPort,
-                    memberOutPort,
-                    socialIdentityOutPort,
-                    jwtOutPort,
-                    clock,
-                    accessTtl,
-                )
+            val useCase = newUseCase(googleOAuthOutPort, memberOutPort, socialIdentityOutPort, refreshTokenOutPort, jwtOutPort)
 
             val member = Member.register(Email("user@gmail.com"), now.minusSeconds(86_400))
             val identity =
@@ -189,6 +263,8 @@ class LoginWithGoogleUseCaseTest :
                 socialIdentityOutPort.findBy(Provider.GOOGLE, ProviderUserId("google-sub-3"))
             } returns identity
             every { memberOutPort.findById(member.id) } returns member
+            every { refreshTokenOutPort.findActiveBy(member.id, DeviceId("device-1")) } returns null
+            every { refreshTokenOutPort.save(any()) } answers { firstArg() }
             every {
                 jwtOutPort.issueAccessToken(member.id, accessTtl)
             } returns AccessToken.of("access.jwt.token", now.plus(accessTtl))
@@ -212,16 +288,9 @@ class LoginWithGoogleUseCaseTest :
             val googleOAuthOutPort = mockk<GoogleOAuthOutPort>()
             val memberOutPort = mockk<MemberOutPort>()
             val socialIdentityOutPort = mockk<SocialIdentityOutPort>()
+            val refreshTokenOutPort = mockk<RefreshTokenOutPort>()
             val jwtOutPort = mockk<JwtOutPort>()
-            val useCase =
-                LoginWithGoogleUseCase(
-                    googleOAuthOutPort,
-                    memberOutPort,
-                    socialIdentityOutPort,
-                    jwtOutPort,
-                    clock,
-                    accessTtl,
-                )
+            val useCase = newUseCase(googleOAuthOutPort, memberOutPort, socialIdentityOutPort, refreshTokenOutPort, jwtOutPort)
 
             val member = Member.register(Email("old@gmail.com"), now.minusSeconds(86_400))
             val identity =
@@ -242,6 +311,8 @@ class LoginWithGoogleUseCaseTest :
 
             val savedSlot = slot<Member>()
             every { memberOutPort.save(capture(savedSlot)) } answers { savedSlot.captured }
+            every { refreshTokenOutPort.findActiveBy(member.id, DeviceId("device-1")) } returns null
+            every { refreshTokenOutPort.save(any()) } answers { firstArg() }
             every {
                 jwtOutPort.issueAccessToken(member.id, accessTtl)
             } returns AccessToken.of("access.jwt.token", now.plus(accessTtl))
@@ -261,16 +332,9 @@ class LoginWithGoogleUseCaseTest :
             val googleOAuthOutPort = mockk<GoogleOAuthOutPort>()
             val memberOutPort = mockk<MemberOutPort>()
             val socialIdentityOutPort = mockk<SocialIdentityOutPort>()
+            val refreshTokenOutPort = mockk<RefreshTokenOutPort>()
             val jwtOutPort = mockk<JwtOutPort>()
-            val useCase =
-                LoginWithGoogleUseCase(
-                    googleOAuthOutPort,
-                    memberOutPort,
-                    socialIdentityOutPort,
-                    jwtOutPort,
-                    clock,
-                    accessTtl,
-                )
+            val useCase = newUseCase(googleOAuthOutPort, memberOutPort, socialIdentityOutPort, refreshTokenOutPort, jwtOutPort)
 
             val withdrawn = Member.register(Email("user@gmail.com"), now.minusSeconds(86_400)).withdraw(now.minusSeconds(60))
             val identity =
@@ -293,6 +357,7 @@ class LoginWithGoogleUseCaseTest :
                 Then("MemberNotActiveException 이 발생한다") {
                     shouldThrow<MemberNotActiveException> { useCase.execute(command) }
                     verify(exactly = 0) { jwtOutPort.issueAccessToken(any(), any()) }
+                    verify(exactly = 0) { refreshTokenOutPort.save(any()) }
                 }
             }
         }

@@ -1,18 +1,46 @@
 @baseUrl = http://localhost:8080/api
 @token = Bearer eyJ...
+@refreshToken = REPLACE_WITH_REFRESH_TOKEN_FROM_LOGIN
+@deviceId = 00000000-0000-0000-0000-000000000001
 
 ### ===== Google ID Token Flow 로그인 =====
 
 ### Google ID Token 으로 로그인 (또는 자동 가입)
 # 모바일 클라이언트가 Google SDK 로 받은 ID Token 을 그대로 전달한다.
 # 응답의 accessToken 을 이후 보호된 API 호출 시 `Authorization: Bearer ...` 헤더로 사용.
+# 응답의 refreshToken 은 안전한 저장소(Keychain 등)에 보관 — 응답 시점에만 한 번 전달된다.
 POST {{baseUrl}}/v1/auth/google
 Content-Type: application/json
 
 {
   "idToken": "REPLACE_WITH_GOOGLE_ID_TOKEN",
-  "deviceId": "00000000-0000-0000-0000-000000000001",
+  "deviceId": "{{deviceId}}",
   "deviceLabel": "iPhone 15 Pro"
+}
+
+### ===== Refresh Token 회전 =====
+
+### Refresh Token 으로 새 Access/Refresh Token 발급
+# 응답의 새 refreshToken 으로 기존 토큰을 대체해서 보관한다.
+# 이미 폐기된 토큰을 다시 사용하면 탈취로 간주, 회원의 모든 활성 토큰이 일괄 회수된다.
+POST {{baseUrl}}/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}",
+  "deviceId": "{{deviceId}}"
+}
+
+### ===== 로그아웃 =====
+
+### 디바이스 단위 Refresh Token 폐기 (멱등)
+# 존재하지 않거나 이미 폐기된 토큰이어도 200 성공 응답.
+# Access Token 은 stateless 라 즉시 무효화가 불가능하므로 짧은 TTL 로 만료를 기다린다.
+POST {{baseUrl}}/v1/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
 }
 
 ### (참고) 보호된 엔드포인트 호출 예시

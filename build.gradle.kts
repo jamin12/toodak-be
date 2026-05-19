@@ -43,6 +43,13 @@ dependencies {
     implementation(libs.mapstruct)
     kapt(libs.mapstruct.processor)
 
+    // QueryDSL (JPA bulk update / 동적 쿼리). :jakarta 분류자가 Jakarta EE 네임스페이스 지원.
+    // 정적 메타모델(Q클래스)은 kapt 가 com.querydsl.apt.jpa.JPAAnnotationProcessor 로 자동 생성.
+    implementation(variantOf(libs.querydsl.jpa) { classifier("jakarta") })
+    kapt(variantOf(libs.querydsl.apt) { classifier("jakarta") })
+    kapt(libs.jakarta.annotation.api)
+    kapt(libs.jakarta.persistence.api)
+
     // Google ID Token 검증 (GoogleIdTokenVerifier)
     implementation(libs.google.api.client)
 

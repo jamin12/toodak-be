@@ -2,8 +2,12 @@ package org.toodakbe.adapter.auth.restIn.mapper
 
 import org.mapstruct.Mapper
 import org.toodakbe.adapter.auth.restIn.dto.LoginWithGoogleRequest
+import org.toodakbe.adapter.auth.restIn.dto.LogoutRequest
+import org.toodakbe.adapter.auth.restIn.dto.RefreshAccessTokenRequest
 import org.toodakbe.adapter.auth.restIn.dto.TokenPairResponse
 import org.toodakbe.application.auth.dto.LoginWithGoogleCommand
+import org.toodakbe.application.auth.dto.LogoutCommand
+import org.toodakbe.application.auth.dto.RefreshAccessTokenCommand
 import org.toodakbe.application.auth.dto.TokenPairResult
 
 /**
@@ -15,6 +19,10 @@ import org.toodakbe.application.auth.dto.TokenPairResult
 @Mapper(componentModel = "spring")
 interface AuthRestMapper {
     fun toCommand(request: LoginWithGoogleRequest): LoginWithGoogleCommand
+
+    fun toCommand(request: RefreshAccessTokenRequest): RefreshAccessTokenCommand
+
+    fun toCommand(request: LogoutRequest): LogoutCommand
 
     fun toResponse(result: TokenPairResult): TokenPairResponse
 }

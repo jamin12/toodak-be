@@ -21,6 +21,8 @@ flywayPlugin = "11.1.1"
 uuidCreator = "6.1.1"
 # OpenAPI/Swagger UI. Spring Boot 4 호환 stable 버전이 출시되면 3.x 로 올린다.
 springdocOpenapi = "2.8.17"
+# QueryDSL (Jakarta 분류자 — Spring Boot 3+/Jakarta EE 네임스페이스용)
+querydsl = "5.1.0"
 
 [libraries]
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
@@ -56,6 +58,12 @@ instancio-core = { module = "org.instancio:instancio-core", version.ref = "insta
 instancio-junit = { module = "org.instancio:instancio-junit", version.ref = "instancio" }
 # 신규: OpenAPI/Swagger UI (Springdoc)
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdocOpenapi" }
+# 신규: QueryDSL — :jakarta 분류자는 build.gradle.kts 에서 variantOf 로 부여한다.
+querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
+querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" }
+# QueryDSL APT 가 jakarta 네임스페이스 어노테이션을 처리할 수 있도록 kapt classpath 에 명시.
+jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api" }
+jakarta-persistence-api = { module = "jakarta.persistence:jakarta.persistence-api" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

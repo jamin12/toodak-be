@@ -12,3 +12,25 @@ data class LoginWithGoogleCommand(
     val deviceId: String,
     val deviceLabel: String?,
 )
+
+/**
+ * Refresh Token 회전 (Access Token 재발급) Command.
+ *
+ * @property refreshToken 클라이언트가 보관 중인 평문 Refresh Token
+ * @property deviceId 발급 당시 등록된 디바이스와 일치해야 한다 — 불일치 시 거부
+ */
+data class RefreshAccessTokenCommand(
+    val refreshToken: String,
+    val deviceId: String,
+)
+
+/**
+ * 로그아웃 Command — 디바이스 단위 Refresh Token 폐기.
+ *
+ * 멱등 — 존재하지 않거나 이미 폐기된 토큰이어도 성공 응답.
+ *
+ * @property refreshToken 평문 Refresh Token
+ */
+data class LogoutCommand(
+    val refreshToken: String,
+)

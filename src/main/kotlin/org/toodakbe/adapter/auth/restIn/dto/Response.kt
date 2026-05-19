@@ -10,11 +10,10 @@ data class TokenPairResponse(
     )
     val accessToken: String,
     @field:Schema(
-        description = "Refresh Token 평문. Phase 4 에서 채워지며 1차 스코프는 `null`.",
+        description = "평문 Refresh Token. 발급/회전 시점에만 한 번 전달되며 안전한 저장소(Keychain 등)에 보관한다.",
         example = "rt_xxxxxxxxxxxx",
-        nullable = true,
     )
-    val refreshToken: String?,
+    val refreshToken: String,
     @field:Schema(
         description = "Access Token 유효 기간 (초).",
         example = "900",

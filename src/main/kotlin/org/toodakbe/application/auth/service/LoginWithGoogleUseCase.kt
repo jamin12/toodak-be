@@ -8,10 +8,14 @@ import org.toodakbe.application.auth.dto.TokenPairResult
 import org.toodakbe.application.auth.port.inbound.LoginWithGoogleInPort
 import org.toodakbe.application.auth.port.outbound.GoogleOAuthOutPort
 import org.toodakbe.application.auth.port.outbound.JwtOutPort
+import org.toodakbe.application.auth.port.outbound.RefreshTokenOutPort
 import org.toodakbe.application.member.exception.MemberNotFoundException
 import org.toodakbe.application.member.port.outbound.MemberOutPort
 import org.toodakbe.application.member.port.outbound.SocialIdentityOutPort
+import org.toodakbe.domain.auth.model.IssuedRefreshToken
+import org.toodakbe.domain.auth.model.RefreshToken
 import org.toodakbe.domain.auth.model.VerifiedSocialUser
+import org.toodakbe.domain.auth.vo.DeviceId
 import org.toodakbe.domain.member.enums.MemberStatus
 import org.toodakbe.domain.member.exception.MemberNotActiveException
 import org.toodakbe.domain.member.model.Member
@@ -22,7 +26,7 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * Google ID Token Flow 기반 로그인 UseCase (Phase 3 1차 — Access Token만).
+ * Google ID Token Flow 기반 로그인 UseCase.
  *
  * 분기 정책 (제공자 일반화 — `payload.provider` 로 분기, Google 하드코딩 없음):
  * - SocialIdentity 존재(재로그인): Member 조회 + WITHDRAWN 거부 + 이메일 동기화
@@ -31,16 +35,20 @@ import java.time.Instant
  *   - 없으면 새 Member 생성
  *   - SocialIdentity 연결
  *
- * RefreshToken 발급은 Phase 4 에서 추가된다 — 현재는 `null`을 반환.
+ * 인증 토큰 발급(Phase 4):
+ * - 같은 디바이스의 기존 활성 Refresh Token 이 있으면 회수 후 신규 발급 (디바이스 단위 단일 세션)
+ * - Access Token + Refresh Token 평문을 묶어 반환
  */
 @Service
 class LoginWithGoogleUseCase(
     private val googleOAuthOutPort: GoogleOAuthOutPort,
     private val memberOutPort: MemberOutPort,
     private val socialIdentityOutPort: SocialIdentityOutPort,
+    private val refreshTokenOutPort: RefreshTokenOutPort,
     private val jwtOutPort: JwtOutPort,
     private val clock: Clock,
     @param:Value($$"${jwt.access-ttl}") private val accessTtl: Duration,
+    @param:Value($$"${jwt.refresh-ttl}") private val refreshTtl: Duration,
 ) : LoginWithGoogleInPort {
     @Transactional
     override fun execute(command: LoginWithGoogleCommand): TokenPairResult {
@@ -56,10 +64,13 @@ class LoginWithGoogleUseCase(
                 linkOrRegister(payload, now)
             }
 
+        val deviceId = DeviceId(command.deviceId)
+        val issuedRefresh = issueRefreshToken(member.id, deviceId, command.deviceLabel, now)
+
         val accessToken = jwtOutPort.issueAccessToken(member.id, accessTtl)
         return TokenPairResult(
             accessToken = accessToken.value,
-            refreshToken = null,
+            refreshToken = issuedRefresh.plainValue,
             expiresIn = accessTtl.seconds,
         )
     }
@@ -108,5 +119,22 @@ class LoginWithGoogleUseCase(
             ),
         )
         return member
+    }
+
+    /**
+     * 디바이스 단위 단일 세션 정책: 기존 활성 토큰이 있으면 회수 후 신규 발급.
+     */
+    private fun issueRefreshToken(
+        memberId: MemberId,
+        deviceId: DeviceId,
+        deviceLabel: String?,
+        now: Instant,
+    ): IssuedRefreshToken {
+        refreshTokenOutPort.findActiveBy(memberId, deviceId)?.let { existing ->
+            refreshTokenOutPort.save(existing.revoke(now))
+        }
+        val issued = RefreshToken.issue(memberId, deviceId, deviceLabel, refreshTtl, now)
+        refreshTokenOutPort.save(issued.entity)
+        return issued
     }
 }
