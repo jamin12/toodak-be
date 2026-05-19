@@ -18,4 +18,5 @@ enum class MemberResponseCode(
     NOT_ACTIVE(403, 200, "활성 상태의 회원이 아닙니다."),
     WITHDRAWN(403, 201, "탈퇴한 회원입니다."),
     EMAIL_VERIFICATION_REQUIRED(400, 202, "이메일 인증이 필요합니다."),
+    NOT_FOUND(500, 203, "회원을 찾을 수 없습니다."),
 }

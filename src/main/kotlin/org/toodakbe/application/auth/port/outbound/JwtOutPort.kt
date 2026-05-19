@@ -6,10 +6,7 @@ import org.toodakbe.domain.member.vo.MemberId
 import java.time.Duration
 
 /**
- * JWT 발급/검증 외부 의존(JJWT)을 추상화하는 OutPort.
- *
- * "한 외부 의존 = 한 OutPort" 규칙에 따라 JJWT 라이브러리 호출을 이 인터페이스 뒤로 격리한다.
- * UseCase는 [issueAccessToken]/[parseAccessToken] 두 메서드만 통해 JWT를 다룬다.
+ * JWT 발급/검증 OutPort.
  */
 interface JwtOutPort {
     /**

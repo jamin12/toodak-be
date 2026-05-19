@@ -13,3 +13,7 @@ insert_final_newline = true
 # 단일 식 함수를 expression body로 강제 변환하는 ktlint 룰을 비활성화해
 # 멀티라인 시그니처 + 멀티라인 expression body 사이 cycle을 회피한다.
 ktlint_standard_function-expression-body = disabled
+
+# Request/Response/Command/Result/Query DTO 등을 역할별 파일(Request.kt, Response.kt, Command.kt 등)에
+# 모아서 작성하는 컨벤션을 채택. ktlint filename 룰("단일 클래스 파일은 클래스명과 일치")과 충돌하므로 비활성화.
+ktlint_standard_filename = disabled

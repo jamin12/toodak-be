@@ -14,4 +14,5 @@ enum class AuthResponseCode(
     TOKEN_REUSE_DETECTED(401, 121, "재사용된 Refresh Token이 감지되었습니다."),
     REFRESH_EXPIRED(401, 122, "Refresh Token이 만료되었습니다."),
     DEVICE_MISMATCH(401, 123, "토큰 발급 디바이스와 요청 디바이스가 일치하지 않습니다."),
+    INVALID_ID_TOKEN(401, 124, "Google ID Token이 유효하지 않습니다."),
 }

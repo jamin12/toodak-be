@@ -1,0 +1,20 @@
+@baseUrl = http://localhost:8080/api
+@token = Bearer eyJ...
+
+### ===== Google ID Token Flow 로그인 =====
+
+### Google ID Token 으로 로그인 (또는 자동 가입)
+# 모바일 클라이언트가 Google SDK 로 받은 ID Token 을 그대로 전달한다.
+# 응답의 accessToken 을 이후 보호된 API 호출 시 `Authorization: Bearer ...` 헤더로 사용.
+POST {{baseUrl}}/v1/auth/google
+Content-Type: application/json
+
+{
+  "idToken": "REPLACE_WITH_GOOGLE_ID_TOKEN",
+  "deviceId": "00000000-0000-0000-0000-000000000001",
+  "deviceLabel": "iPhone 15 Pro"
+}
+
+### (참고) 보호된 엔드포인트 호출 예시
+GET {{baseUrl}}/v1/ping
+Authorization: {{token}}

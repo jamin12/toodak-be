@@ -49,6 +49,9 @@ dependencies {
     // UUID v7 (Java 표준엔 v4까지만)
     implementation(libs.uuid.creator)
 
+    // OpenAPI / Swagger UI
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
+
     // 테스트
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.instancio.core)

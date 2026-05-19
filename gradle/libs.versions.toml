@@ -19,6 +19,8 @@ googleApiClient = "2.7.0"
 flywayPlugin = "11.1.1"
 # UUID v1~v7 생성기 (RFC 9562). Java 표준엔 v4까지만 있음.
 uuidCreator = "6.1.1"
+# OpenAPI/Swagger UI. Spring Boot 4 호환 stable 버전이 출시되면 3.x 로 올린다.
+springdocOpenapi = "2.8.17"
 
 [libraries]
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
@@ -52,6 +54,8 @@ uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version.ref = "uuidC
 # 신규: 테스트 데이터 (Instancio는 Java 라이브러리지만 Kotlin에서도 정상 동작)
 instancio-core = { module = "org.instancio:instancio-core", version.ref = "instancio" }
 instancio-junit = { module = "org.instancio:instancio-junit", version.ref = "instancio" }
+# 신규: OpenAPI/Swagger UI (Springdoc)
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdocOpenapi" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

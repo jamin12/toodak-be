@@ -48,6 +48,23 @@ app:
       # DispatcherServlet이 /error로 forward하므로 통과시켜야 한다.
       - /error
       - /error/**
+      # Swagger / OpenAPI 문서 경로 (Springdoc)
+      - /v3/api-docs
+      - /v3/api-docs/**
+      - /swagger-ui.html
+      - /swagger-ui/**
+
+# Springdoc OpenAPI 설정.
+# - default-produces-media-type: 모든 응답을 JSON 으로 표시.
+# - api-docs/swagger-ui 경로는 기본값 사용 (/v3/api-docs, /swagger-ui/index.html).
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+  default-produces-media-type: application/json
 
 logging:
   level:
