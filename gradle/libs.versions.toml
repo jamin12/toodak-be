@@ -19,8 +19,8 @@ googleApiClient = "2.7.0"
 flywayPlugin = "11.1.1"
 # UUID v1~v7 생성기 (RFC 9562). Java 표준엔 v4까지만 있음.
 uuidCreator = "6.1.1"
-# OpenAPI/Swagger UI. Spring Boot 4 호환 stable 버전이 출시되면 3.x 로 올린다.
-springdocOpenapi = "2.8.17"
+# OpenAPI/Swagger UI. Spring Boot 4 호환은 3.x (2.x 는 Boot 3 전용이라 WebMvcProperties NoClassDefFound 발생).
+springdocOpenapi = "3.0.3"
 # QueryDSL (Jakarta 분류자 — Spring Boot 3+/Jakarta EE 네임스페이스용)
 querydsl = "5.1.0"
 
