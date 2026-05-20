@@ -16,7 +16,7 @@ instancio = "5.4.1"
 # Google ID Token 검증 (GoogleIdTokenVerifier).
 googleApiClient = "2.7.0"
 # Flyway Gradle plugin (수동 마이그레이션 실행용). core는 Spring Boot BOM이 관리.
-flywayPlugin = "11.1.1"
+flywayPlugin = "11.14.1"
 # UUID v1~v7 생성기 (RFC 9562). Java 표준엔 v4까지만 있음.
 uuidCreator = "6.1.1"
 # OpenAPI/Swagger UI. Spring Boot 4 호환은 3.x (2.x 는 Boot 3 전용이라 WebMvcProperties NoClassDefFound 발생).

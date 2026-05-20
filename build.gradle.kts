@@ -1,15 +1,12 @@
-// 실행 가능 모듈: app convention plugin 적용 (spring + bootJar + web)
-// jpa convention plugin 추가: kotlin-plugin-jpa + all-open + spring-boot-starter-data-jpa
-// kotlin-kapt: MapStruct annotation processor 용
-// flyway: 수동 마이그레이션 실행용 (./gradlew flywayMigrate)
-//   Flyway 11.x Gradle plugin은 JDBC driver를 buildscript classpath에서 찾으므로
-//   PostgreSQL driver를 buildscript {} 블록에 추가한다.
+// flyway: Gradle plugin은 런타임이 아닌 buildscript classpath에서 driver/DB 핸들러를 찾는다.
+// flyway-database-postgresql 은 Flyway 10+ 에서 분리된 PostgreSQL 핸들러.
 buildscript {
     repositories {
         mavenCentral()
     }
     dependencies {
         classpath("org.postgresql:postgresql:42.7.4")
+        classpath("org.flywaydb:flyway-database-postgresql:${libs.versions.flywayPlugin.get()}")
     }
 }
 
