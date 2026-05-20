@@ -41,3 +41,7 @@ out/
 
 ### OMC ###
 .omc/
+
+### HTTP Client (IntelliJ) ###
+# 비밀 변수(Google ID Token 등) — 커밋 금지. 공개 env(http-client.env.json)는 커밋한다.
+**/http-client.private.env.json

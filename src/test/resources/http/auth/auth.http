@@ -1,27 +1,38 @@
-@baseUrl = http://localhost:8080/api
-@token = Bearer eyJ...
-@refreshToken = REPLACE_WITH_REFRESH_TOKEN_FROM_LOGIN
-@deviceId = 00000000-0000-0000-0000-000000000001
+### 인증 시나리오 (Google 로그인 → 회전 → 로그아웃)
+#
+# 변수 출처:
+#   - http-client.env.json          → baseUrl (모든 .http 공통, 환경마다 다름)
+#   - 아래 @deviceId / @deviceLabel  → 이 auth 시나리오 전용 입력
+#   - 로그인 요청의 idToken          → 1회용. 매 세션 Google 에서 새로 받아 직접 붙여넣기 (≈1시간 만료)
+#
+# accessToken / refreshToken 은 로그인·회전 응답에서 자동 캡처되어 전역 변수로 보관되므로
+# 손으로 복사할 필요가 없다 — 환경(local) 선택 후 위에서 아래로 순서대로 실행하면 된다.
 
-### ===== Google ID Token Flow 로그인 =====
+@deviceId = 00000000-0000-0000-0000-000000000001
+@deviceLabel = iPhone 15 Pro
 
 ### Google ID Token 으로 로그인 (또는 자동 가입)
 # 모바일 클라이언트가 Google SDK 로 받은 ID Token 을 그대로 전달한다.
-# 응답의 accessToken 을 이후 보호된 API 호출 시 `Authorization: Bearer ...` 헤더로 사용.
-# 응답의 refreshToken 은 안전한 저장소(Keychain 등)에 보관 — 응답 시점에만 한 번 전달된다.
 POST {{baseUrl}}/v1/auth/google
 Content-Type: application/json
 
 {
   "idToken": "REPLACE_WITH_GOOGLE_ID_TOKEN",
   "deviceId": "{{deviceId}}",
-  "deviceLabel": "iPhone 15 Pro"
+  "deviceLabel": "{{deviceLabel}}"
 }
 
-### ===== Refresh Token 회전 =====
+> {%
+    client.test("로그인 성공", function () {
+        client.assert(response.status === 200, "status != 200: " + response.status);
+        client.assert(response.body.data.accessToken, "accessToken 없음");
+    });
+    client.global.set("accessToken", response.body.data.accessToken);
+    client.global.set("refreshToken", response.body.data.refreshToken);
+%}
 
-### Refresh Token 으로 새 Access/Refresh Token 발급
-# 응답의 새 refreshToken 으로 기존 토큰을 대체해서 보관한다.
+### Refresh Token 으로 새 Access/Refresh Token 발급 (회전)
+# 직전 응답에서 캡처한 refreshToken 을 사용하고, 새 토큰을 다시 전역에 덮어쓴다.
 # 이미 폐기된 토큰을 다시 사용하면 탈취로 간주, 회원의 모든 활성 토큰이 일괄 회수된다.
 POST {{baseUrl}}/v1/auth/refresh
 Content-Type: application/json
@@ -31,7 +42,18 @@ Content-Type: application/json
   "deviceId": "{{deviceId}}"
 }
 
-### ===== 로그아웃 =====
+> {%
+    client.test("회전 성공", function () {
+        client.assert(response.status === 200, "status != 200: " + response.status);
+    });
+    client.global.set("accessToken", response.body.data.accessToken);
+    client.global.set("refreshToken", response.body.data.refreshToken);
+%}
+
+### 보호된 엔드포인트 호출 예시
+# 캡처된 accessToken 을 Bearer 로 전달.
+GET {{baseUrl}}/v1/ping
+Authorization: Bearer {{accessToken}}
 
 ### 디바이스 단위 Refresh Token 폐기 (멱등)
 # 존재하지 않거나 이미 폐기된 토큰이어도 200 성공 응답.
@@ -42,7 +64,3 @@ Content-Type: application/json
 {
   "refreshToken": "{{refreshToken}}"
 }
-
-### (참고) 보호된 엔드포인트 호출 예시
-GET {{baseUrl}}/v1/ping
-Authorization: {{token}}
