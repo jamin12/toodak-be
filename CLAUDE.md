@@ -42,3 +42,9 @@
 - **형식**: `{type}({브랜치명}): 제목`
 - **type 종류**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`
 - **예시**: 브랜치 `feature/google-login`이면 → `feat(feature/google-login): JWT 어댑터 구현`
+
+## 5. 주석 규칙
+
+- **코드를 읽으면 알 수 있는 내용을 주석으로 반복하지 않는다.** 타입·동작·필드 역할의 단순 재진술 금지.
+- **skill에 이미 정의된 컨벤션을 코드 주석으로 다시 적지 않는다.** (예: "필드는 var + protected set", "신규/갱신은 isNew로 구분" 같은 메커니즘/컨벤션 설명)
+- 주석은 **"왜 이렇게 했는가"가 비자명할 때만** 짧게 남긴다.
