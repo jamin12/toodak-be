@@ -32,42 +32,69 @@ import java.util.UUID
     ],
 )
 class RefreshTokenEntity(
+    id: UUID,
+    memberId: UUID,
+    tokenHash: String,
+    deviceId: String,
+    deviceLabel: String?,
+    issuedAt: Instant,
+    expiresAt: Instant,
+    revokedAt: Instant?,
+    rotatedFromId: UUID?,
+) {
     @Id
     @Column(name = "id", nullable = false, columnDefinition = "UUID", comment = "Refresh Token ID (UUID v7)")
-    val id: UUID,
+    var id: UUID = id
+        protected set
+
     @Column(name = "member_id", nullable = false, columnDefinition = "UUID", comment = "회원 ID (FK -> member.id)")
-    val memberId: UUID,
+    var memberId: UUID = memberId
+        protected set
+
     @Column(
         name = "token_hash",
         nullable = false,
         length = 128,
         comment = "평문 토큰의 SHA-256 해시 (HEX). 평문은 저장하지 않는다.",
     )
-    val tokenHash: String,
+    var tokenHash: String = tokenHash
+        protected set
+
     @Column(name = "device_id", nullable = false, length = 255, comment = "클라이언트 디바이스 식별자 (UUID 등)")
-    val deviceId: String,
+    var deviceId: String = deviceId
+        protected set
+
     @Column(
         name = "device_label",
         nullable = true,
         length = 255,
         comment = "사용자/관리자가 인식할 수 있는 디바이스 라벨",
     )
-    val deviceLabel: String?,
+    var deviceLabel: String? = deviceLabel
+        protected set
+
     @Column(name = "issued_at", nullable = false, comment = "발급 시각")
-    val issuedAt: Instant,
+    var issuedAt: Instant = issuedAt
+        protected set
+
     @Column(name = "expires_at", nullable = false, comment = "만료 시각 (now + refresh-ttl)")
-    val expiresAt: Instant,
+    var expiresAt: Instant = expiresAt
+        protected set
+
     @Column(
         name = "revoked_at",
         nullable = true,
         comment = "폐기 시각 (NULL 이면 활성). 한 번 채워지면 비울 수 없다.",
     )
-    var revokedAt: Instant?,
+    var revokedAt: Instant? = revokedAt
+        protected set
+
     @Column(
         name = "rotated_from_id",
         nullable = true,
         columnDefinition = "UUID",
         comment = "회전 직전 토큰의 ID (자기 참조). 탈취 감지에 사용.",
     )
-    val rotatedFromId: UUID?,
-)
+    var rotatedFromId: UUID? = rotatedFromId
+        protected set
+}

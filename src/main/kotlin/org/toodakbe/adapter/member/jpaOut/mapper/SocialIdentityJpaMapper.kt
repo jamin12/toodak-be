@@ -6,6 +6,9 @@ import org.toodakbe.domain.member.vo.MemberId
 import org.toodakbe.domain.member.vo.ProviderUserId
 import org.toodakbe.domain.member.vo.SocialIdentityId
 
+/**
+ * SocialIdentity ↔ SocialIdentityEntity 매퍼 (확장함수 패턴).
+ */
 fun SocialIdentity.toEntity(): SocialIdentityEntity =
     SocialIdentityEntity(
         id = this.id.value,

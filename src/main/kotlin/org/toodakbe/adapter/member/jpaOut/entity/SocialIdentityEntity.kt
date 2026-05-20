@@ -33,27 +33,45 @@ import java.util.UUID
     ],
 )
 class SocialIdentityEntity(
+    id: UUID,
+    memberId: UUID,
+    provider: Provider,
+    providerUserId: String,
+    emailVerifiedAt: Instant?,
+    linkedAt: Instant,
+) {
     @Id
     @Column(name = "id", nullable = false, columnDefinition = "UUID", comment = "소셜 연결 ID (UUID v7)")
-    val id: UUID,
+    var id: UUID = id
+        protected set
+
     @Column(name = "member_id", nullable = false, columnDefinition = "UUID", comment = "회원 ID (FK -> member.id)")
-    val memberId: UUID,
+    var memberId: UUID = memberId
+        protected set
+
     @Enumerated(EnumType.STRING)
     @Column(name = "provider", nullable = false, length = 20, comment = "소셜 제공자 (GOOGLE | KAKAO | APPLE)")
-    val provider: Provider,
+    var provider: Provider = provider
+        protected set
+
     @Column(
         name = "provider_user_id",
         nullable = false,
         length = 255,
         comment = "제공자가 발급한 영구 사용자 식별자",
     )
-    val providerUserId: String,
+    var providerUserId: String = providerUserId
+        protected set
+
     @Column(
         name = "email_verified_at",
         nullable = true,
         comment = "제공자가 이메일을 검증한 시각 (자동 연결 정책 판단용)",
     )
-    val emailVerifiedAt: Instant?,
+    var emailVerifiedAt: Instant? = emailVerifiedAt
+        protected set
+
     @Column(name = "linked_at", nullable = false, comment = "연결 시각")
-    val linkedAt: Instant,
-)
+    var linkedAt: Instant = linkedAt
+        protected set
+}

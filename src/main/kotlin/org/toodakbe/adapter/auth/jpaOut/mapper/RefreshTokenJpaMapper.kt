@@ -8,10 +8,6 @@ import org.toodakbe.domain.member.vo.MemberId
 
 /**
  * RefreshToken ↔ RefreshTokenEntity 매퍼 (확장함수 패턴).
- *
- * - Domain → Entity: 신규 저장 시.
- * - Entity → Domain: 영속화 어댑터에서 복원 시 `RefreshToken.restore` 사용.
- * - Entity.update: 기존 행 갱신 — 변경 가능한 필드(`revokedAt`)만 반영.
  */
 fun RefreshToken.toEntity(): RefreshTokenEntity =
     RefreshTokenEntity(
@@ -38,8 +34,3 @@ fun RefreshTokenEntity.toDomain(): RefreshToken =
         revokedAt = this.revokedAt,
         rotatedFromId = this.rotatedFromId?.let { RefreshTokenId.from(it) },
     )
-
-fun RefreshTokenEntity.update(domain: RefreshToken): RefreshTokenEntity {
-    this.revokedAt = domain.revokedAt
-    return this
-}

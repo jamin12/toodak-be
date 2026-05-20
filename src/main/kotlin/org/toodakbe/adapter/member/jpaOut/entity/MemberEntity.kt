@@ -19,16 +19,31 @@ import java.util.UUID
 @Entity
 @Table(name = "member", comment = "회원")
 class MemberEntity(
+    id: UUID,
+    email: String,
+    status: MemberStatus,
+    createdAt: Instant,
+    withdrawnAt: Instant?,
+) {
     @Id
     @Column(name = "id", nullable = false, columnDefinition = "UUID", comment = "회원 ID (UUID v7)")
-    val id: UUID,
+    var id: UUID = id
+        protected set
+
     @Column(name = "email", nullable = false, length = 320, comment = "회원 이메일 (부가 정보, UNIQUE 아님)")
-    var email: String,
+    var email: String = email
+        protected set
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20, comment = "회원 상태 (ACTIVE | WITHDRAWN)")
-    var status: MemberStatus,
+    var status: MemberStatus = status
+        protected set
+
     @Column(name = "created_at", nullable = false, comment = "가입 시각")
-    val createdAt: Instant,
+    var createdAt: Instant = createdAt
+        protected set
+
     @Column(name = "withdrawn_at", nullable = true, comment = "탈퇴 시각 (NULL 이면 ACTIVE)")
-    var withdrawnAt: Instant?,
-)
+    var withdrawnAt: Instant? = withdrawnAt
+        protected set
+}
