@@ -19,13 +19,6 @@ import org.toodakbe.application.auth.port.inbound.LoginWithGoogleInPort
 import org.toodakbe.application.auth.port.inbound.LogoutInPort
 import org.toodakbe.application.auth.port.inbound.RefreshAccessTokenInPort
 
-/**
- * 인증 v1 컨트롤러.
- *
- * - `POST /api/v1/auth/google`: Google ID Token 으로 로그인 + 자동 가입 + TokenPair 발급
- * - `POST /api/v1/auth/refresh`: Refresh Token 회전 + 새 TokenPair 발급 (탈취 감지 포함)
- * - `POST /api/v1/auth/logout`: 디바이스 단위 Refresh Token 폐기 (멱등)
- */
 @Tag(name = "Auth", description = "인증/인가 (Google ID Token Flow + JWT)")
 @RestController
 @RequestMapping("/api/v1/auth")
