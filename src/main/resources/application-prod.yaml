@@ -1,0 +1,22 @@
+# 운영 프로파일. DB 접속정보·시크릿은 환경변수 필수 — 기본값 없음(누락 시 기동 실패).
+spring:
+    datasource:
+        url: ${DB_URL}
+        username: ${DB_USERNAME}
+        password: ${DB_PASSWORD}
+        driver-class-name: org.postgresql.Driver
+
+jwt:
+    # 32바이트 이상 시크릿 필수.
+    secret: ${JWT_SECRET}
+
+# 운영에선 API 문서 비공개.
+springdoc:
+    api-docs:
+        enabled: false
+    swagger-ui:
+        enabled: false
+
+logging:
+    level:
+        org.toodakbe: INFO
